@@ -328,31 +328,6 @@ const fetchUserUploads = async (req, res) => {
   }
 };
 
-const fetchAllDocuments = async (req, res) => {
-  try {
-    const documents = await Upload.find({});
-    return res.status(200).json({ documents });
-  } catch (error) {
-    res.status(500).json({ message: "Oops something went wrong!" });
-  }
-};
-
-const fetchFileDetailsById = async (req, res) => {
-  const { fileId } = req.params;
-
-  try {
-    const details = await Upload.findById({ _id: fileId });
-
-    if (!details) {
-      return res.status(404).json({ message: "File not found" });
-    }
-
-    return res.status(200).json({ data: details });
-  } catch (error) {
-    console.error(error);
-  }
-};
-
 // const fetchSolutionFromAPI = async (question) => {
 //   const url = "https://open-ai21.p.rapidapi.com/conversationgpt35";
 //   const options = {
@@ -420,6 +395,4 @@ module.exports = {
   updateUser,
   userDocumentUpload,
   fetchUserUploads,
-  fetchAllDocuments,
-  fetchFileDetailsById,
 };

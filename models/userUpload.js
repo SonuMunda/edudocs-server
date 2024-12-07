@@ -34,14 +34,18 @@ const uploadSchema = new Schema({
     type: String,
     required: true,
   },
-  likes: {
-    type: Number,
-    required: false,
-  },
-  votes: {
-    type: Number,
-    required: false,
-  },
+  likes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  votes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   uploadedBy: {
     type: Schema.Types.ObjectId,
     ref: "User",
