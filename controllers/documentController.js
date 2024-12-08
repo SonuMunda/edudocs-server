@@ -51,8 +51,7 @@ const addLike = async (req, res) => {
 };
 
 const addVote = async (req, res) => {
-  const { uploadId } = req.params;
-  const userId = req.user._id;
+  const { uploadId, userId } = req.params;
 
   try {
     const upload = await Upload.findById(uploadId);
