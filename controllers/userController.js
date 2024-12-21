@@ -77,7 +77,7 @@ const verifyMail = async (req, res) => {
     await user.save();
 
     setTimeout(() => {
-      res.redirect(`http://localhost:5173/email-verified?email=${user.email}`);
+      res.redirect(`${process.env.CLIENT_URL}/email-verified?email=${user.email}`);
     }, 1000);
   } catch (error) {
     return res
