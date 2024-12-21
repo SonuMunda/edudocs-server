@@ -10,6 +10,8 @@ const {
   fetchUserUploads,
   fetchUserDoubts,
   getUserDetailsByUsername,
+  getUserDetailsById,
+  updateUserPassword,
 } = require("../controllers/userController");
 
 const authMiddleware = require("../middlewares/authMiddlware");
@@ -21,9 +23,10 @@ router.post("/auth/signin", signin);
 router.get("/auth/:id", authMiddleware, getUserDetails);
 // router.post("/user/chat/solve-doubt/:userId", authMiddleware, userDoubtSolver);
 router.get("/doubts-chat/:userId", fetchUserDoubts);
-// router.get("/user/:id", getUserDetailsById);
+router.get("/user/id/:id", getUserDetailsById);
 router.get("/:username", getUserDetailsByUsername);
 router.patch("/auth/update/:id", authMiddleware, updateUser);
+router.patch("/auth/update-password/:id", authMiddleware, updateUserPassword);
 router.post(
   "/upload/:id",
   authMiddleware,

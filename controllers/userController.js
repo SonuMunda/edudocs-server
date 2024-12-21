@@ -5,6 +5,7 @@ const Upload = require("../models/userUpload");
 const generateToken = require("../utils/generateToken");
 const sendVerificationMail = require("../utils/sendVerificationMail");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const signup = async (req, res) => {
   try {
@@ -19,12 +20,24 @@ const signup = async (req, res) => {
     });
 
     if (existingUser) {
-      if (existingUser.username === username) {
+      if (
+        existingUser.username === username &&
+        existingUser.emailVerified === true
+      ) {
         return res.status(409).json({ message: "Username already in use" });
       }
-      if (existingUser.email === email) {
+      if (existingUser.email === email && existingUser.emailVerified) {
         return res.status(409).json({ message: "Email already in use" });
       }
+
+      await Promise.all([
+        existingUser.deleteOne({ _id: existingUser._id }),
+        sendVerificationMail(existingUser),
+      ]);
+
+      return res
+        .status(201)
+        .json({ message: "Verification email sent to your email" });
     }
 
     const user = new User({
@@ -64,8 +77,8 @@ const verifyMail = async (req, res) => {
     await user.save();
 
     setTimeout(() => {
-      res.redirect("http://localhost:5173/login");
-    }, 2000);
+      res.redirect(`http://localhost:5173/email-verified?email=${user.email}`);
+    }, 1000);
   } catch (error) {
     return res
       .status(500)
@@ -143,22 +156,22 @@ const fetchUserDoubts = async (req, res) => {
   }
 };
 
-// const getUserDetailsById = async (req, res) => {
-//   try {
-//     const { id } = req.params;
+const getUserDetailsById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-//     const user = await User.findById(id).select("-password");
+    const user = await User.findById(id).select("-password");
 
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-//     return res.status(200).json({ user });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(500).json({ message: "Internal server error", error });
-//   }
-// };
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error", error });
+  }
+};
 
 const getUserDetailsByUsername = async (req, res) => {
   const { username } = req.params;
@@ -198,6 +211,16 @@ const updateUser = async (req, res) => {
       if (usernameAvailability) {
         return res.status(409).json({ message: "Username already in use." });
       }
+
+      const documents = await Upload.find({ uploadedBy: id });
+
+      if (documents.length > 0) {
+        documents.forEach(async (document) => {
+          document.username = username;
+          await document.save();
+        });
+      }
+
       user.username = username;
     }
 
@@ -220,6 +243,46 @@ const updateUser = async (req, res) => {
     return res
       .status(500)
       .json({ message: "An error occurred while updating the profile." });
+  }
+};
+
+const updateUserPassword = async (req, res) => {
+  try {
+    const userData = req.user;
+    if (!userData) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found!" });
+    }
+
+    const isPasswordMatched = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isPasswordMatched) {
+      return res.status(401).json({ message: "Invalid current password" });
+    }
+
+    user.password = newPassword;
+
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ user: user, message: "Password updated successfully" });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while updating the password." });
   }
 };
 
@@ -390,9 +453,10 @@ module.exports = {
   signin,
   getUserDetails,
   fetchUserDoubts,
-  // getUserDetailsById,
+  getUserDetailsById,
   getUserDetailsByUsername,
   updateUser,
+  updateUserPassword,
   userDocumentUpload,
   fetchUserUploads,
 };
