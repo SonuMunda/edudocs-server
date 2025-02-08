@@ -1,8 +1,7 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
 
 const authMiddleware = async (req, res, next) => {
-  const token = req.header("Authorization");
+  const token = req?.header("Authorization");
 
   if (!token) {
     return res.status(401).json({ message: "Token not found" });
@@ -12,14 +11,7 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     const isVerified = jwt.verify(jwtToken, process.env.SECRET_KEY);
-    const userData = await User.findById(isVerified.userId).select("-password");
-
-    if (!userData) {
-      return res.status(401).json({ message: "Unauthorized user!!" });
-    }
-
-    req.user = userData;
-    req.token = token;
+    req.userId = isVerified.userId;
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid Token" });

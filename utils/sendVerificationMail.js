@@ -7,7 +7,7 @@ const sendVerificationMail = async (user) => {
     expiresIn: "1h",
   });
 
-  const link = `${process.env.SERVER_URL}api/user/auth/verify/${user._id}/${verificationToken}`;
+  const link = `${process.env.CLIENT_URL}/api/user/auth/verify/${user._id}/${verificationToken}`;
 
   try {
     const transporter = nodemailer.createTransport({
@@ -54,10 +54,9 @@ const sendVerificationMail = async (user) => {
   </div>
 </div>
  `,
-};
+    };
 
     await transporter.sendMail(mailOptions);
-    console.log("Email Sent Successfully");
 
     return {
       success: true,
