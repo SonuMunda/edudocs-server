@@ -7,7 +7,7 @@ const sendVerificationMail = async (user) => {
     expiresIn: "1h",
   });
 
-  const link = `${process.env.CLIENT_URL}/api/user/auth/verify/${user._id}/${verificationToken}`;
+  const link = `${process.env.SERVER_URL}/api/auth/verify/${user._id}/${verificationToken}`;
 
   try {
     const transporter = nodemailer.createTransport({
@@ -26,7 +26,7 @@ const sendVerificationMail = async (user) => {
       subject: "Welcome to Edudocs! Verify Your Email Address",
       html: ` 
       <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 30px;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
       <!-- Header Section -->
       <div style="background-color: #3498db; color: white; text-align: center; padding: 20px;">
         <h1 style="margin: 0; font-size: 28px;">Edudocs</h1>

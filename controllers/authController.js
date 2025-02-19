@@ -1,17 +1,33 @@
 const { HttpStatusCode } = require("axios");
 const User = require("../models/userModel");
+const Upload = require("../models/userUpload");
 const generateToken = require("../utils/generateToken");
 const sendVerificationMail = require("../utils/sendVerificationMail");
+const cloudinary = require("../config/cloudnaryConfig");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const sendForgotPasswordMail = require("../utils/sendForgotPasswordMail");
+const { OAuth2Client } = require("google-auth-library");
+const oauth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const {
+  generateFromEmail,
+  generateUsername,
+} = require("unique-username-generator");
 
 const signup = async (req, res) => {
   try {
-    const { username, firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
-    if (!username || !firstName || !email || !password) {
+    if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    let username = generateFromEmail(email, 3);
+    let isUsernameAvailable = await User.findOne({ username });
+
+    while (isUsernameAvailable) {
+      username = generateFromEmail(email, 3);
+      isUsernameAvailable = await User.findOne({ username });
     }
 
     const existingUser = await User.findOne({
@@ -49,7 +65,7 @@ const signup = async (req, res) => {
 
     return res
       .status(HttpStatusCode.Created)
-      .json({ message: "Verification email sent to your email" });
+      .json({ message: "Verification email sent!" });
   } catch (error) {
     console.error("Error during signup:", error);
     res
@@ -127,6 +143,61 @@ const signin = async (req, res) => {
   }
 };
 
+const googleSignin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    if (!ticket) {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    const payload = ticket.getPayload();
+
+    let user = await User.findOne({ email: payload.email });
+
+    if (!user) {
+      let username = generateFromEmail(payload.email, 3);
+      let isUsernameAvailable = await User.findOne({ username });
+
+      while (isUsernameAvailable) {
+        username = generateFromEmail(payload.email, 3);
+        isUsernameAvailable = await User.findOne({ username });
+      }
+
+      user = await User.create({
+        username: username,
+        firstName: payload.given_name,
+        lastName: payload.family_name,
+        email: payload.email,
+        emailVerified: true,
+        source: "google",
+      });
+    }
+
+    const token = await generateToken(user);
+
+    return res.status(200).json({
+      message: "SignIn successful",
+      token: token,
+    });
+  } catch (error) {
+    console.error("Google SignIn Error:", error);
+    return res.status(500).json({
+      message: "Google Sign-In failed",
+      error: error.message,
+    });
+  }
+};
+
 const getUserInfo = async (req, res) => {
   const userId = req?.userId;
   try {
@@ -163,7 +234,7 @@ const updateUser = async (req, res) => {
         .json({ message: "Unauthorized user!!" });
     }
 
-    const { username, firstName, lastName } = req.body;
+    const { username, firstName, lastName, university } = req.body;
 
     // Check if user exists
     const user = await User.findById(userId).select("-password");
@@ -180,7 +251,7 @@ const updateUser = async (req, res) => {
         return res.status(409).json({ message: "Username already in use." });
       }
 
-      const documents = await Upload.find({ uploadedBy: id });
+      const documents = await Upload.find({ uploadedBy: userId });
 
       if (documents.length > 0) {
         documents.forEach(async (document) => {
@@ -198,6 +269,10 @@ const updateUser = async (req, res) => {
     }
     if (lastName) {
       user.lastName = lastName;
+    }
+
+    if (university) {
+      user.university = university;
     }
 
     // Save updated user data
@@ -410,7 +485,7 @@ const verifyForgetPasswordMail = async (req, res) => {
     );
 
     res.redirect(
-      `${process.env.CLIENT_URL}/reset-password/${verificationToken}`
+      `${process.env.CLIENT_URL}/reset-password?token=${verificationToken}`
     );
   } catch (error) {
     console.error(error);
@@ -452,6 +527,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   signup,
   verifyMail,
+  googleSignin,
   signin,
   getUserInfo,
   updateUser,

@@ -7,6 +7,12 @@ const authMiddleware = async (req, res, next) => {
     return res.status(401).json({ message: "Token not found" });
   }
 
+  const isTokenExpired = jwt.decode(token)?.exp < Date.now() / 1000;
+
+  if (isTokenExpired) {
+    return res.status(401).json({ message: "Token expired" });
+  }
+
   const jwtToken = token.replace("Bearer", "").trim();
 
   try {
@@ -14,6 +20,7 @@ const authMiddleware = async (req, res, next) => {
     req.userId = isVerified.userId;
     next();
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ message: "Invalid Token" });
   }
 };

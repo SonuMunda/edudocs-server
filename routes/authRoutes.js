@@ -12,6 +12,8 @@ const {
   forgetPassword,
   verifyForgetPasswordMail,
   resetPassword,
+
+  googleSignin,
 } = require("../controllers/authController");
 const upload = require("../config/multerConfig");
 
@@ -30,7 +32,11 @@ router.post(
 );
 
 router.post("/forget-password/:email", forgetPassword);
-router.get("/reset-password-verification/:userId/:token", verifyForgetPasswordMail);
+router.get(
+  "/reset-password-verification/:userId/:token",
+  verifyForgetPasswordMail
+);
 router.patch("/reset-password", authMiddleware, resetPassword);
+router.post("/google/signin", googleSignin);
 
 module.exports = router;
