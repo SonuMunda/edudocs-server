@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddlware");
+
 const {
   signin,
   signup,
@@ -12,7 +13,6 @@ const {
   forgetPassword,
   verifyForgetPasswordMail,
   resetPassword,
-
   googleSignin,
 } = require("../controllers/authController");
 const upload = require("../config/multerConfig");
@@ -38,5 +38,6 @@ router.get(
 );
 router.patch("/reset-password", authMiddleware, resetPassword);
 router.post("/google/signin", googleSignin);
+
 
 module.exports = router;

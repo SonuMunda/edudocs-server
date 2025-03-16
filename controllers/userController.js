@@ -1,6 +1,7 @@
 const Chat = require("../models/userDoubt");
 const User = require("../models/userModel");
 const Upload = require("../models/userUpload");
+const io = require("socket.io");
 
 const fetchUserDoubts = async (req, res) => {
   const { userId } = req.params;
@@ -72,6 +73,14 @@ const fetchUserUploads = async (req, res) => {
   }
 };
 
+const updateUserStatus = async (userId, isOnline) => {
+  try {
+    await User.findByIdAndUpdate(userId, { active_status: isOnline });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+  }
+};
+
 // const fetchSolutionFromAPI = async (question) => {
 //   const url = "https://open-ai21.p.rapidapi.com/conversationgpt35";
 //   const options = {
@@ -133,4 +142,5 @@ module.exports = {
   getUserDetailsById,
   getUserDetailsByUsername,
   fetchUserUploads,
+  updateUserStatus,
 };

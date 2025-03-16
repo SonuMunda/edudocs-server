@@ -9,10 +9,7 @@ const bcrypt = require("bcrypt");
 const sendForgotPasswordMail = require("../utils/sendForgotPasswordMail");
 const { OAuth2Client } = require("google-auth-library");
 const oauth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const {
-  generateFromEmail,
-  generateUsername,
-} = require("unique-username-generator");
+const { generateFromEmail } = require("unique-username-generator");
 
 const signup = async (req, res) => {
   try {
@@ -523,6 +520,8 @@ const resetPassword = async (req, res) => {
       .json({ message: "Oops something went wrong!" || error.message });
   }
 };
+
+
 
 module.exports = {
   signup,

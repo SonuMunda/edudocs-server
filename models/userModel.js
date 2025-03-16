@@ -29,10 +29,18 @@ const userSchema = new Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now,
+    default: Date.now(),
+  },
+  role: {
+    type: String,
+    default: "student",
   },
   source: {
     type: String,
+  },
+  active_status: {
+    type: Boolean,
+    default: false,
   },
   uploads: [{ type: Schema.Types.ObjectId, ref: "Upload" }],
 });
