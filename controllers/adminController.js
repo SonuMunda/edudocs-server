@@ -3,6 +3,7 @@ const User = require("../models/userModel");
 const Uploads = require("../models/userUpload");
 const Admin = require("../models/adminModel");
 const jwt = require("jsonwebtoken");
+const uploadToCloudinary = require("../utils/uploadToCloudnary");
 
 const signin = async (req, res) => {
   try {
@@ -80,4 +81,52 @@ const getDashboardData = async (req, res) => {
   }
 };
 
-module.exports = { signin, fetchAdminDetails, getDashboardData };
+const bookUpload = async (req, res) => {
+  try {
+    const { title, author, description, category } = req.body;
+    const file = req.file;
+
+
+    console.log(file);
+
+    // if (!file) {
+    //   return res
+    //     .status(HttpStatusCode.BadRequest)
+    //     .json({ message: "Please upload a file" });
+    // }
+    
+
+    // if (!title || !author || !description || !cover || !category) {
+    //   return res
+    //     .status(HttpStatusCode.BadRequest)
+    //     .json({ message: "Please fill all the fields" });
+    // }
+
+    // const responseLink = await uploadToCloudinary(file);
+
+    // if (!responseLink) {
+    //   return res
+    //     .status(HttpStatusCode.InternalServerError)
+    //     .json({ message: "Error uploading file" });
+    // }
+
+    // const document = new Uploads({
+    //   title,
+    //   author,
+    //   description,
+    //   cover: responseLink.secure_url,
+    //   url: responseLink.secure_url,
+    //   category,
+    // });
+
+    // await document.save();
+
+    // return res
+    //   .status(HttpStatusCode.Created)
+    //   .json({ message: "Document uploaded successfully" });
+  } catch (error) {
+    return res.status(HttpStatusCode.BadRequest).json({ error: error.message });
+  }
+};
+
+module.exports = { signin, fetchAdminDetails, getDashboardData, bookUpload };

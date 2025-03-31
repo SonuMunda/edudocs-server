@@ -1,7 +1,6 @@
 const Chat = require("../models/userDoubt");
 const User = require("../models/userModel");
 const Upload = require("../models/userUpload");
-const io = require("socket.io");
 
 const fetchUserDoubts = async (req, res) => {
   const { userId } = req.params;
