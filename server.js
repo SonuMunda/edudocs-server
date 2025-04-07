@@ -8,6 +8,7 @@ const documentRouter = require("./routes/documentRoutes");
 const adminRouter = require("./routes/adminRoutes");
 const leaderboardRouter = require("./routes/leaderboardRoutes");
 const documentToolsRouter = require("./routes/documentToolsRoutes");
+const bookRouter = require("./routes/booksRouter");
 const { updateUserStatus } = require("./controllers/userController");
 const http = require("http");
 
@@ -22,6 +23,7 @@ app.use("/api/leaderboard", leaderboardRouter);
 app.use("/api/documents", documentRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/tools", documentToolsRouter);
+app.use("/api/books", bookRouter);
 
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
@@ -41,7 +43,6 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", async () => {
     if (userId) {
       await updateUserStatus(userId, false);
-      console.log("User is offline");
     }
   });
 });

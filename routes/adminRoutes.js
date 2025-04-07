@@ -12,6 +12,6 @@ const authMiddleware = require("../middlewares/authMiddlware");
 router.post("/auth/signin", signin);
 router.get("/admin-info", authMiddleware, fetchAdminDetails);
 router.get("/dashboard", authMiddleware, getDashboardData);
-router.post("/upload", authMiddleware, upload.single("file"), bookUpload);
+router.post("/upload", upload.single("cover"), bookUpload);
 
 module.exports = router;
