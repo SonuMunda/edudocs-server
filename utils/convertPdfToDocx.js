@@ -4,15 +4,15 @@ const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
 
 const convertPdfToDocx = async (file, res) => {
   try {
-    console.log("File object:", file);
+    // console.log("File object:", file);
 
     if (!file || !file.buffer) {
-      console.error("No file buffer received");
+      // console.error("No file buffer received");
       return res.status(400).json({ error: "Invalid file" });
     }
 
     // 1. Create Job
-    console.log("Creating CloudConvert job...");
+    // console.log("Creating CloudConvert job...");
     let job;
     try {
       job = await cloudConvert.jobs.create({
@@ -33,9 +33,9 @@ const convertPdfToDocx = async (file, res) => {
           },
         },
       });
-      console.log("Job created:", job.id);
+      // console.log("Job created:", job.id);
     } catch (createError) {
-      console.error("Job creation failed:", createError);
+      // console.error("Job creation failed:", createError);
       throw new Error("Failed to create conversion job");
     }
 
@@ -45,7 +45,7 @@ const convertPdfToDocx = async (file, res) => {
       throw new Error("Upload task not found");
     }
 
-    console.log("Uploading file...");
+    // console.log("Uploading file...");
     await cloudConvert.tasks.upload(
       uploadTask,
       file.buffer,
@@ -53,17 +53,17 @@ const convertPdfToDocx = async (file, res) => {
     );
 
     // 3. Wait for Completion
-    console.log("Waiting for conversion...");
+    // console.log("Waiting for conversion...");
     let finishedJob;
     try {
       finishedJob = await cloudConvert.jobs.wait(job.id);
     } catch (waitError) {
-      console.error("Job wait failed:", waitError);
+      // console.error("Job wait failed:", waitError);
       throw new Error("Conversion timeout or failure");
     }
 
     if (finishedJob.status === "error") {
-      console.error("Conversion failed:", finishedJob.message);
+      // console.error("Conversion failed:", finishedJob.message);
       throw new Error(finishedJob.message || "Conversion failed");
     }
 
@@ -73,13 +73,13 @@ const convertPdfToDocx = async (file, res) => {
     );
 
     if (!exportTask?.result?.files?.[0]?.url) {
-      console.error("Export task incomplete:", exportTask);
+      // console.error("Export task incomplete:", exportTask);
       throw new Error("No download URL generated");
     }
 
     return exportTask.result.files[0].url;
   } catch (error) {
-    console.error("Full conversion error:", error);
+    // console.error("Full conversion error:", error);
     if (res) {
       return res.status(500).json({
         error: error.message || "PDF to DOCX conversion failed",

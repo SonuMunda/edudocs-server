@@ -195,6 +195,56 @@ const googleSignin = async (req, res) => {
   }
 };
 
+const newGoogleSignin = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    oauth2Client.setCredentials({ access_token: accessToken });
+    
+    const { data } = await oauth2Client.request({
+      url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+    });
+
+
+    let user = await User.findOne({ email: data.email });
+
+    if (!user) {
+      let username = generateFromEmail(data.email, 3);
+      let isUsernameAvailable = await User.findOne({ username });
+
+      while (isUsernameAvailable) {
+        username = generateFromEmail(data.email, 3);
+        isUsernameAvailable = await User.findOne({ username });
+      }
+
+      user = await User.create({
+        username: username,
+        firstName: data.given_name,
+        lastName: data.family_name,
+        email: data.email,
+        emailVerified: true,
+        source: "google",
+      });
+    }
+
+    const token = await generateToken(user);
+
+    return res.status(200).json({
+      message: "SignIn successful",
+      token: token,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Google Sign-In failed",
+      error: error.message,
+    });
+  }
+};
+
 const getUserInfo = async (req, res) => {
   const userId = req?.userId;
   try {
@@ -521,12 +571,11 @@ const resetPassword = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   signup,
   verifyMail,
   googleSignin,
+  newGoogleSignin,
   signin,
   getUserInfo,
   updateUser,

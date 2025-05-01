@@ -4,10 +4,10 @@ const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
 
 const convertDocxToPdf = async (file, res) => {
   try {
-    console.log("File object:", file);
+    // console.log("File object:", file);
 
     if (!file || !file.buffer) {
-      console.error("Error: File buffer is undefined.");
+      // console.error("Error: File buffer is undefined.");
       return res.status(400).send("File buffer is invalid.");
     }
 
@@ -46,7 +46,7 @@ const convertDocxToPdf = async (file, res) => {
     job = await cloudConvert.jobs.wait(job.id);
 
     if (job.status === "error") {
-      console.error("Conversion failed:", job.message);
+      // console.error("Conversion failed:", job.message);
       return res.status(500).send("Conversion failed. Please try again later.");
     }
 
@@ -62,7 +62,7 @@ const convertDocxToPdf = async (file, res) => {
     const downloadUrl = exportTask.result.files[0].url;
     return downloadUrl;
   } catch (error) {
-    console.error("Error converting DOCX to PDF:", error);
+    // console.error("Error converting DOCX to PDF:", error);
     return res.status(500).send("Internal server error.");
   }
 };
