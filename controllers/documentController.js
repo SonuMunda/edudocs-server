@@ -25,53 +25,81 @@ const fetchFileDetailsById = async (req, res) => {
   }
 };
 
-const addLike = async (req, res) => {
-  const { uploadId, userId } = req.params;
-
-
-  try {
-    const upload = await Upload.findById(uploadId);
-
-    if (!upload) {
-      return res.status(404).json({ message: "Upload not found" });
-    }
-
-    if (upload.likes.includes(userId)) {
-      return res.status(400).json({ message: "Already liked" });
-    }
-
-    upload.likes.push(userId);
-    await upload.save();
-
-    return res.status(200).json({ message: "You liked document" });
-  } catch (error) {
-    console.error("Error adding like:", error);
-    return res.status(500).json({ message: "Error adding like" });
-  }
-};
-
-const addVote = async (req, res) => {
+const toggleLike = async (req, res) => {
   const { uploadId, userId } = req.params;
 
   try {
     const upload = await Upload.findById(uploadId);
+    if (!upload) return res.status(404).json({ message: "Upload not found" });
 
-    if (!upload) {
-      return res.status(404).json({ message: "Upload not found" });
+    const hasLiked = upload.likes.includes(userId);
+    const updateOperation = hasLiked
+      ? { $pull: { likes: userId } }
+      : { $addToSet: { likes: userId } };
+
+    const updatedUpload = await Upload.findByIdAndUpdate(
+      uploadId,
+      updateOperation,
+      { new: true }
+    ).lean();
+
+    if (req.io) {
+      req.io.to(uploadId).emit("likeUpdate", {
+        documentId: uploadId,
+        likes: updatedUpload.likes,
+        likesCount: updatedUpload.likes.length,
+      });
     }
 
-    if (upload.votes.includes(userId)) {
-      return res.status(400).json({ message: "Already voted" });
-    }
-
-    upload.votes.push(userId);
-    await upload.save();
-
-    return res.status(200).json({ message: "Voted successfully" });
+    return res.status(200).json({
+      likes: updatedUpload.likes,
+      likesCount: updatedUpload.likes.length,
+    });
   } catch (error) {
-    console.error("Error adding vote:", error);
-    return res.status(500).json({ message: "Error adding vote" });
+    console.error("Error toggling like:", error);
+    return res.status(500).json({ message: "Error toggling like" });
   }
 };
 
-module.exports = { fetchAllDocuments, fetchFileDetailsById, addLike, addVote };
+const toggleVote = async (req, res) => {
+  const { uploadId, userId } = req.params;
+
+  try {
+    const upload = await Upload.findById(uploadId);
+    if (!upload) return res.status(404).json({ message: "Upload not found" });
+
+    const hasVoted = upload.votes.includes(userId);
+    const updateOperation = hasVoted
+      ? { $pull: { votes: userId } }
+      : { $addToSet: { votes: userId } };
+
+    const updatedUpload = await Upload.findByIdAndUpdate(
+      uploadId,
+      updateOperation,
+      { new: true }
+    ).lean();
+
+    if (req.io) {
+      req.io.to(uploadId).emit("voteUpdate", {
+        documentId: uploadId,
+        votes: updatedUpload.votes,
+        votesCount: updatedUpload.votes.length,
+      });
+    }
+
+    return res.status(200).json({
+      votes: updatedUpload.votes,
+      votesCount: updatedUpload.votes.length,
+    });
+  } catch (error) {
+    console.error("Error toggling vote:", error);
+    return res.status(500).json({ message: "Error toggling vote" });
+  }
+};
+
+module.exports = {
+  fetchAllDocuments,
+  fetchFileDetailsById,
+  toggleLike,
+  toggleVote,
+};

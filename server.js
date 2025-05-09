@@ -17,6 +17,8 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+app.set("io", null);
+
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/leaderboard", leaderboardRouter);
@@ -28,17 +30,28 @@ app.use("/api/books", bookRouter);
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    methods: ["GET", "POST", "PATCH"],
+    credentials: true,
   },
 });
+
+app.set("io", io);
 
 io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
   if (userId) {
     await updateUserStatus(userId, true);
-    await socket.emit("status", { message: "User is online" });
+    socket.emit("status", { message: "User is online" });
   }
+
+  socket.on("joinDocument", (documentId) => {
+    socket.join(documentId);
+  });
+
+  socket.on("leaveDocument", (documentId) => {
+    socket.leave(documentId);
+  });
 
   socket.on("disconnect", async () => {
     if (userId) {
@@ -47,10 +60,15 @@ io.on("connection", async (socket) => {
   });
 });
 
+io.on("error", (error) => {
+  console.error("Socket.io error:", error);
+});
+
 const PORT = process.env.PORT || 3000;
 
 connectDatabase().then(() => {
   server.listen(PORT, () => {
-    console.log(`Server Running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Socket.io listening for connections`);
   });
 });

@@ -4,13 +4,13 @@ const router = express.Router();
 const {
   fetchAllDocuments,
   fetchFileDetailsById,
-  addLike,
-  addVote,
+  toggleLike,
+  toggleVote,
 } = require("../controllers/documentController");
 
 router.get("/", fetchAllDocuments);
 router.get("/document/:fileId", fetchFileDetailsById);
-router.patch("/document/like/:uploadId/:userId", addLike);
-router.patch("/document/vote/:uploadId/:userId", addVote);
+router.patch("/document/like/:uploadId/:userId", toggleLike);
+router.patch("/document/vote/:uploadId/:userId", toggleVote);
 
 module.exports = router;
