@@ -11,9 +11,11 @@ const documentToolsRouter = require("./routes/documentToolsRoutes");
 const bookRouter = require("./routes/booksRouter");
 const { updateUserStatus } = require("./controllers/userController");
 const http = require("http");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
