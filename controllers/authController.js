@@ -73,7 +73,6 @@ const signup = async (req, res) => {
 
 const verifyMail = async (req, res) => {
   const { id, token } = req.params;
-
   try {
     const user = await User.findById({ _id: id });
     if (!user) {
@@ -204,11 +203,10 @@ const newGoogleSignin = async (req, res) => {
     }
 
     oauth2Client.setCredentials({ access_token: accessToken });
-    
-    const { data } = await oauth2Client.request({
-      url: 'https://www.googleapis.com/oauth2/v3/userinfo',
-    });
 
+    const { data } = await oauth2Client.request({
+      url: "https://www.googleapis.com/oauth2/v3/userinfo",
+    });
 
     let user = await User.findOne({ email: data.email });
 
@@ -283,7 +281,7 @@ const updateUser = async (req, res) => {
 
     const { username, firstName, lastName, university } = req.body;
 
-    // Check if user exists
+    
     const user = await User.findById(userId).select("-password");
     if (!user) {
       return res
@@ -291,7 +289,7 @@ const updateUser = async (req, res) => {
         .json({ message: "User not found!" });
     }
 
-    // Check if the username is provided and different
+
     if (username != null && username !== user.username) {
       const usernameAvailability = await User.findOne({ username: username });
       if (usernameAvailability) {
@@ -310,7 +308,6 @@ const updateUser = async (req, res) => {
       user.username = username;
     }
 
-    // Update other fields if provided
     if (firstName) {
       user.firstName = firstName;
     }
@@ -322,7 +319,6 @@ const updateUser = async (req, res) => {
       user.university = university;
     }
 
-    // Save updated user data
     await user.save();
 
     return res
@@ -412,7 +408,7 @@ const uploadDocumentToCloudinary = async (file) => {
 };
 
 const userDocumentUpload = async (req, res) => {
-  const { id } = req.params;
+  const userId = req?.userId;
   const {
     title,
     category,
@@ -425,7 +421,7 @@ const userDocumentUpload = async (req, res) => {
   const file = req.file;
 
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(userId).select("-password");
     if (!user) {
       return res
         .status(HttpStatusCode.NotFound)
@@ -456,7 +452,7 @@ const userDocumentUpload = async (req, res) => {
       session,
       description,
       fileType,
-      uploadedBy: id,
+      uploadedBy: userId,
       username: user.username,
     });
 

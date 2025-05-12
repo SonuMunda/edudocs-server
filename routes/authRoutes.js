@@ -17,6 +17,7 @@ const {
   newGoogleSignin,
 } = require("../controllers/authController");
 const upload = require("../config/multerConfig");
+const validateDocumentUpload = require("../middlewares/validateDocumentUpload");
 
 router.post("/signup", signup);
 router.get("/verify/:id/:token", verifyMail);
@@ -26,9 +27,10 @@ router.patch("/update", authMiddleware, updateUser);
 router.patch("/update-password", authMiddleware, updateUserPassword);
 
 router.post(
-  "/upload/:id",
+  "/upload",
   authMiddleware,
   upload.single("file"),
+  validateDocumentUpload,
   userDocumentUpload
 );
 
@@ -40,7 +42,5 @@ router.get(
 router.patch("/reset-password", authMiddleware, resetPassword);
 router.post("/google/signin", googleSignin);
 router.post("/new/google/signin", newGoogleSignin);
-
-
 
 module.exports = router;

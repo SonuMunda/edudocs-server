@@ -155,4 +155,42 @@ const bookUpload = async (req, res) => {
   }
 };
 
-module.exports = { signin, fetchAdminDetails, getDashboardData, bookUpload };
+const deleteDocument = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const document = await Uploads.findById(documentId);
+
+    if (!document) {
+      return res
+        .status(HttpStatusCode.NotFound)
+        .json({ message: "Document not found" });
+    }
+
+    await User.updateMany(
+      { uploads: documentId },
+      { $pull: { uploads: documentId } }
+    );
+
+    await Uploads.findByIdAndDelete(documentId);
+
+    const documents = await Uploads.find();
+
+    return res.status(HttpStatusCode.Ok).json({
+      data: documents,
+      message: "Document deleted successfully",
+    });
+  } catch (error) {
+    return res
+      .status(HttpStatusCode.InternalServerError)
+      .json({ message: error.message || "Internal server error" });
+  }
+};
+
+module.exports = {
+  signin,
+  fetchAdminDetails,
+  getDashboardData,
+  bookUpload,
+  deleteDocument,
+};
