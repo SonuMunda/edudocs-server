@@ -3,11 +3,11 @@ const jwt = require("jsonwebtoken");
 const sendVerificationMail = async (user) => {
   const secretKey = process.env.SECRET_KEY;
 
-  const verificationToken = jwt.sign({ id: user._id }, secretKey, {
+  const verificationToken = jwt.sign({ userId: user._id }, secretKey, {
     expiresIn: "1h",
   });
 
-  const link = `${process.env.SERVER_URL}/api/auth/verify/${user._id}/${verificationToken}`;
+  const link = `${process.env.SERVER_URL}/api/auth/verify?token=${verificationToken}`;
 
   try {
     const transporter = nodemailer.createTransport({

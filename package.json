@@ -32,7 +32,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "cloudconvert": "^2.3.7",
+    "cloudconvert": "^3.0.0",
     "nodemon": "^3.1.9"
   }
 }

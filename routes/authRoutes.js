@@ -18,12 +18,14 @@ const {
 } = require("../controllers/authController");
 const upload = require("../config/multerConfig");
 const validateDocumentUpload = require("../middlewares/validateDocumentUpload");
+const validateSignup = require("../middlewares/validateSignup");
+const validateToken = require("../middlewares/validateToken");
 
-router.post("/signup", signup);
-router.get("/verify/:id/:token", verifyMail);
+router.post("/signup", validateSignup, signup);
+router.get("/verify", verifyMail);
 router.post("/signin", signin);
 router.get("/user-info", authMiddleware, getUserInfo);
-router.patch("/update", authMiddleware, updateUser);
+router.patch("/update-profile", authMiddleware, updateUser);
 router.patch("/update-password", authMiddleware, updateUserPassword);
 
 router.post(
@@ -36,10 +38,10 @@ router.post(
 
 router.post("/forget-password/:email", forgetPassword);
 router.get(
-  "/reset-password-verification/:userId/:token",
+  "/reset-password-verification/:token",
   verifyForgetPasswordMail
 );
-router.patch("/reset-password", authMiddleware, resetPassword);
+router.patch("/reset-password", validateToken, resetPassword);
 router.post("/google/signin", googleSignin);
 router.post("/new/google/signin", newGoogleSignin);
 

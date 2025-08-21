@@ -62,7 +62,7 @@ const fetchUserUploads = async (req, res) => {
     if (!documents || documents.length === 0) {
       return res
         .status(404)
-        .json({ message: "No documents found for this user" });
+        .json({ message: "not uploaded yet" });
     }
 
     return res.status(200).json(documents);

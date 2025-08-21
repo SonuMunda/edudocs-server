@@ -42,10 +42,17 @@ const signup = async (req, res) => {
         return res.status(409).json({ message: "Email already in use" });
       }
 
-      await Promise.all([
-        existingUser.deleteOne({ _id: existingUser._id }),
-        sendVerificationMail(existingUser),
-      ]);
+      await existingUser.deleteOne();
+
+      const user = new User({
+        username,
+        firstName,
+        lastName,
+        email,
+        password,
+      });
+
+      await Promise.all([user.save(), sendVerificationMail(user)]);
 
       return res.status(201).json({ message: "Verification email sent!" });
     }
@@ -72,9 +79,12 @@ const signup = async (req, res) => {
 };
 
 const verifyMail = async (req, res) => {
-  const { id, token } = req.params;
+  const { token } = req.query;
+
+  const { userId } = jwt.decode(token);
+
   try {
-    const user = await User.findById({ _id: id });
+    const user = await User.findById({ _id: userId }).select("-password");
     if (!user) {
       return res
         .status(HttpStatusCode.NotFound)
@@ -116,7 +126,14 @@ const signin = async (req, res) => {
     if (!user) {
       return res
         .status(HttpStatusCode.NotFound)
-        .json({ message: "User not found" });
+        .json({ message: "User does not exist" });
+    }
+
+    if (!user.emailVerified) {
+      await sendVerificationMail(user);
+      return res
+        .status(HttpStatusCode.Forbidden)
+        .json({ message: "Email not verified. Verification email sent." });
     }
 
     const isPasswordMatched = await user.comparePassword(password);
@@ -281,14 +298,12 @@ const updateUser = async (req, res) => {
 
     const { username, firstName, lastName, university } = req.body;
 
-    
     const user = await User.findById(userId).select("-password");
     if (!user) {
       return res
         .status(HttpStatusCode.NotFound)
         .json({ message: "User not found!" });
     }
-
 
     if (username != null && username !== user.username) {
       const usernameAvailability = await User.findOne({ username: username });
@@ -492,7 +507,7 @@ const forgetPassword = async (req, res) => {
 
     return res
       .status(HttpStatusCode.Ok)
-      .json({ message: "Verification email sent!" });
+      .json({ message: "Verification link has been sent to your email. Please verify it. If not found in the inbox, check the spam folder." });
   } catch (error) {
     console.error("Error during forget password:", error);
     return res
@@ -502,33 +517,16 @@ const forgetPassword = async (req, res) => {
 };
 
 const verifyForgetPasswordMail = async (req, res) => {
-  const { userId, token } = req.params;
+  const { token } = req.params;
+  if (!token) {
+    return res.status(401).json({
+      message: "Token is Missing"
+    })
+  }
 
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(HttpStatusCode.NotFound)
-        .json({ message: "User not found" });
-    }
-
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    if (!decoded) {
-      return res
-        .status(HttpStatusCode.Unauthorized)
-        .json({ message: "Invalid token" });
-    }
-
-    const verificationToken = jwt.sign(
-      { userId: user._id },
-      process.env.SECRET_KEY,
-      {
-        expiresIn: "1h",
-      }
-    );
-
     res.redirect(
-      `${process.env.CLIENT_URL}/reset-password?token=${verificationToken}`
+      `${process.env.CLIENT_URL}/reset-password?token=${token}`
     );
   } catch (error) {
     console.error(error);
@@ -539,15 +537,14 @@ const verifyForgetPasswordMail = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const userId = req?.userId;
   const { newPassword } = req.body;
-  try {
-    if (!userId) {
-      return res
-        .status(HttpStatusCode.Unauthorized)
-        .json({ message: "Unauthorized user!!" });
-    }
+  const userId = req?.userId
 
+  if (!userId) {
+    return res.status(HttpStatusCode.Unauthorized).json({ message: "Unauthorized" })
+  }
+
+  try {
     const user = await User.findById(userId);
     if (!user) {
       res.status(HttpStatusCode.NotFound).json({ message: "User not found" });
